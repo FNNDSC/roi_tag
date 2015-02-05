@@ -221,38 +221,4 @@ CMD=$(echo "                        \
 echo "$CMD"
 eval "$CMD"
 
-
-#for STAGE in $(echo $STAGELIST | tr ',' ' ') ; do
-#    for RESAMPLE in $(echo $RESAMPLELIST | tr ',' ' '); do
-#        for ANNOT in $(echo $ANNOTLIST | tr ',' ' '); do
-#            for HEMI in $(echo $HEMILIST | tr ',' ' '); do
-#                for SURFACE in $(echo $SURFACELIST | tr ',' ' '); do
-#                    CMD=$(echo "mosbatch -b -q      \
-#                    /neuro/users/rudolphpienaar/src/devel/roi_tag/roi_controller.py\
-#                    -w $THISDIR                     \
-#                    -r $RESAMPLE                    \
-#                    -t $RESAMPLETHRESHOLD           \
-#                    -v 1                            \
-#                    -a $ANNOT                       \
-#                    -o $OUTSTEM                     \
-#                    -s $STAGE                       \
-#                    --curvFunc $G_CURVFUNCLIST      \
-#                    --pval le1                      \
-#                    --surface $SURFACE              \
-#                    --hemi $HEMI                    \
-#                    --statFunc ptile-raw            \
-#                    --group $GROUPLIST              \
-#                    --schedulerStdOutDir $G_CNODESCRATCHPATH/$$-stage-$STAGE.roi_controller.jobout    \
-#                    --schedulerStdErrDir $G_CNODESCRATCHPATH/$$-stage-$STAGE.roi_controller.joberr    \
-#                    $SUBJLIST &" | tr '\n' ' ' | sed 's/ \+/ /g')
-#                    #CMD=$(echo "hostname")
-#                    echo "$CMD"
-#                    eval "$CMD"
-#                    cd $THISDIR
-#                done
-#            done
-#        done
-#    done
-#done
-
 shut_down 0
