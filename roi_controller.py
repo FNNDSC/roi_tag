@@ -931,9 +931,9 @@ if __name__ == "__main__":
                 str_hemi    = ','.join(pipeline.l_hemisphere())
                 str_curv    = ','.join(pipeline.l_curvFunc())
 
-                str_execCmd = 'cd %s/%s ; %s --clobber --workingDir %s/%s --curvFunc %s --pval %s --group %s --surface %s --statFunc %s --hemi %s --stages 01234 --schedulerStdOutDir=%s --schedulerStdErrDir=%s $(cat ./ROI.lst)' % \
+                str_execCmd = '%s --clobber --workingDir %s/%s --curvFunc %s --pval %s --group %s --surface %s --statFunc %s --hemi %s --stages 01234 --schedulerStdOutDir=%s --schedulerStdErrDir=%s $(cat ./ROI.lst)' % \
                     (
-                        pipeline.topDir(), str_outDir,
+#                        pipeline.topDir(), str_outDir,
                         "/neuro/users/rudolphpienaar/src/devel/roi_tag/roi_tag.py",
                         pipeline.topDir(), str_outDir,
                         str_curv,

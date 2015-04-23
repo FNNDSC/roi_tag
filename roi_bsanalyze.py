@@ -105,6 +105,9 @@ class FNNDSC_ROIBSANALYZE(base.FNNDSC):
     def l_ctype(self):
         return self._l_ctype
 
+    def l_curvFunc(self):
+        return self._l_curvFunc
+
     def l_annotation(self):
         return self._l_annotation
 
@@ -187,9 +190,11 @@ class FNNDSC_ROIBSANALYZE(base.FNNDSC):
         Return the directory spec of the current sub-sample
         experiment.
         '''
-        str_dirSpecSubsample = '%s/groupCurvAnalysis/%s/ROItag/%s/%s/%s/%s/%s/%s' % (
+        str_curvFunc         = ','.join(self.l_curvFunc())
+        str_dirSpecSubsample = '%s/groupCurvAnalysis/%s/ROItag-%s/%s/%s/%s/%s/%s/%s' % (
                                         self._d_subsampleDir[self._str_subsample],
                                         self._str_annotation,
+                                        str_curvFunc,
                                         self._str_group,
                                         self._str_pval,
                                         self._str_statFunc,
@@ -270,6 +275,7 @@ class FNNDSC_ROIBSANALYZE(base.FNNDSC):
         self._l_group                   = []
         self._l_surface                 = []
         self._l_statFunc                = []
+        self._l_curvFunc                = []
         self._l_hemi                    = []
         self._l_ctype                   = ['thickness', 'curv']
 
@@ -300,6 +306,7 @@ class FNNDSC_ROIBSANALYZE(base.FNNDSC):
             if key == 'group':          self._l_group           = value.split(',')
             if key == 'surface':        self._l_surface         = value.split(',')
             if key == 'statFunc':       self._l_statFunc        = value.split(',')
+            if key == 'curvFunc':       self._l_curvFunc        = value.split(',')
             if key == 'hemi':           self._l_hemi            = value.split(',')
 
 
@@ -362,7 +369,6 @@ def synopsis(ab_shortOnly = False):
     SYNOPSIS
 
             %s                                \\
-                            [--stages <stages>]             \\
                             [-o|--outDir <outputRootDir>]   \\
                             [-a|--annot <annotation>]       \\
                             [-v|--verbosity <verboseLevel>] \\
@@ -371,6 +377,7 @@ def synopsis(ab_shortOnly = False):
                             [-g|--group <groupList>]        \\
                             [-S|--surface <surfaceList>]    \\
                             [-f|--statFunc <statFuncList>]  \\
+                            [-c|--curvFunc <curvFuncList>]  \\
                             [-m|--hemi <hemiList>]          \\
                             <subsample1> <subsample2> ... <subsampleN>
     ''' % scriptName
@@ -411,6 +418,9 @@ def synopsis(ab_shortOnly = False):
 
     ARGS
 
+       --outDir <outputRootDir>
+       The root directory to contain the results of the bootstrap.
+
        --stages <stages>
        The stages to execute. This is specified in a string, such as '1234'
        which would imply stages 1, 2, 3, and 4.
@@ -419,7 +429,7 @@ def synopsis(ab_shortOnly = False):
 
        --annot <annotation>
        The annotation to analyze. Assumes that this directory contains a subtree,
-       'ROItag'.
+       'ROItag-<curvFunc>'.
 
        --pval <pvalCutoffList>
        The pval cutoffs to consider. In practice, this is always 'le1,le5'
@@ -434,11 +444,14 @@ def synopsis(ab_shortOnly = False):
        The statistical functional data to analyze. Typically
        'ptile-raw,ptile-convex'
 
-        --hemi <hemiList>
-        The hemispheres to process. In practice, this is always 'lh,rh'.
+       --curvFunc <curvFuncList>
+       The curvature functions to ROI tag.
 
-        <subsample1> <subsample2> ... <subsampleN>
-        The subsamples to process.
+       --hemi <hemiList>
+       The hemispheres to process. In practice, this is always 'lh,rh'.
+
+       <subsample1> <subsample2> ... <subsampleN>
+       The subsamples to process.
 
     EXAMPLES
 
@@ -523,6 +536,11 @@ if __name__ == "__main__":
                         action='store',
                         default='smoothwm',
                         help='comma separated surface list to process')
+    parser.add_argument('--curvFunc', '-c',
+                        dest='curvFunc',
+                        action='store',
+                        default='H,K,K1,K2,C,BE,S,thickness',
+                        help='comma separated curvature function list to process')
     parser.add_argument('--statFunc', '-f',
                         dest='statFunc',
                         action='store',
@@ -541,6 +559,7 @@ if __name__ == "__main__":
     OSshell.echo(False)
     OSshell.echoStdOut(False)
     OSshell.detach(False)
+    OSshell.waitForChild(True)
 
     roibsanalyze = FNNDSC_ROIBSANALYZE(
                         rsampleList     = args.l_resample,
@@ -551,6 +570,7 @@ if __name__ == "__main__":
                         group           = args.group,
                         surface         = args.surface,
                         statFunc        = args.statFunc,
+                        curvFunc        = args.curvFunc,
                         hemi            = args.hemi,
                         logTo           = 'ROIbsanalyze.log',
                         syslog          = True,
@@ -637,11 +657,14 @@ if __name__ == "__main__":
                                     l_sum       = []
                                     d_occurence = {}
                                     for pipeline._str_subsample in lst_subsample:
-                                        log('Processing %s %s for %s\n' % (pipeline.dirSpecPartial(),
+                                        log('Processing %s %s for %s...' % (pipeline.dirSpecPartial(),
                                                                         pipeline._str_ctype,
-                                                                        pipeline._str_subsample))
+                                                                        pipeline._str_subsample), lw=170)
+                                        #print(pipeline.dirSpecSubsample())
                                         os.chdir(pipeline.dirSpecSubsample())
-                                        l_roi       = OSshell("cat all.tcl | awk '{print $2}'")[0].strip().split('\n')
+                                        l_roi       = OSshell("cat all.tcl | grep label | awk '{print $2}'")[0].strip().split('\n')
+                                        log('[ %02d ]\n' % len(l_roi), syslog=False, rw=20)
+                                        #print(l_roi)
                                         c.cdnode(pipeline.dtreeDir())
                                         c.touch('l_roi', l_roi)
                                         c.touch('path', pipeline.dtreeDir())
