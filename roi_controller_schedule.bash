@@ -18,6 +18,7 @@ G_SYNOPSIS="
   SYNOPSIS
 
         roi_controller_schedule.bash                            \\
+                                -p <roi_controller_script>      \\
                                 -r <subSampleList>              \\
                                 -t <subSampleThreshold>         \\
                                 -a <annotationList>             \\
@@ -39,6 +40,11 @@ G_SYNOPSIS="
         the pattern of input arguments.
 
   ARGS
+
+    -p <roi_controller_script>
+    The python roi_controller script to run. This is either:
+            * roi_controller.py
+            * roi_controller-intragroup.py
 
     -r <subSampleList>
     A comma separated list of subSamples to create and analyze,
@@ -105,7 +111,8 @@ STAGELIST="2,3,4"
 GROUPLIST="13,26,24,45,46,56"
 G_CNODESCRATCHPATH="~/scratch"
 G_CURVFUNCLIST="H,K,K1,K2,C,BE,S,thickness"
-
+G_ROICONTROLLERSCRIPT="roi_controller.py"
+G_RSAMPLESCRIPT="rsample.py"
 let b_clearROI=0
 let b_keepSamples=0
 let b_skipRemainingRsample=0
@@ -113,23 +120,24 @@ G_LC=60
 G_RC=30
 ORIGARGS=$*
 
-while getopts r:t:c:a:s:h:o:v:S:g:R:CKN option ; do
+while getopts r:t:c:a:s:h:o:v:S:g:R:p:CKN option ; do
         case "$option"
         in
-                r) RESAMPLELIST=$OPTARG         ;;
-                t) RESAMPLETHRESHOLD=$OPTARG    ;;
-                c) G_CURVFUNCLIST=$OPTARG       ;;
-                a) ANNOTLIST=$OPTARG            ;;
-                s) SURFACELIST=$OPTARG          ;;
-                S) STAGELIST=$OPTARG            ;;
-                h) HEMILIST=$OPTARG             ;;
-                o) OUTSTEM=$OPTARG              ;;
-                g) GROUPLIST=$OPTARG            ;;
-                C) b_clearROI=1                 ;;
-                K) b_keepSamples=1              ;;
-                N) b_skipRemainingRsample=1     ;;
-                R) G_CNODESCRATCHPATH=$OPTARG   ;;
-                v) let Gi_verbose=$OPTARG       ;;
+                r) RESAMPLELIST=$OPTARG             ;;
+                t) RESAMPLETHRESHOLD=$OPTARG        ;;
+                c) G_CURVFUNCLIST=$OPTARG           ;;
+                a) ANNOTLIST=$OPTARG                ;;
+                s) SURFACELIST=$OPTARG              ;;
+                S) STAGELIST=$OPTARG                ;;
+                h) HEMILIST=$OPTARG                 ;;
+                o) OUTSTEM=$OPTARG                  ;;
+                g) GROUPLIST=$OPTARG                ;;
+                C) b_clearROI=1                     ;;
+                K) b_keepSamples=1                  ;;
+                N) b_skipRemainingRsample=1         ;;
+                R) G_CNODESCRATCHPATH=$OPTARG       ;;
+                p) G_ROICONTROLLERSCRIPT=$OPTARG    ;;
+                v) let Gi_verbose=$OPTARG           ;;
                 \?) synopsis_show
                     exit 0;;
         esac
@@ -166,9 +174,13 @@ fi
 # First do the resampling/setup... there's a clash when run in parallel
 # so need to run *once* first per RESAMPLE with stage 0, and then all
 # the annotations for stages 1 and 2.
+if [[ $G_ROICONTROLLERSCRIPT == "roi_controller-intragroup.py" ]] ; then
+    G_RSAMPLESCRIPT="intra_rsample.py"
+fi
+
 if (( !b_keepSamples )) ; then
     for RESAMPLE in $(echo $RESAMPLELIST | tr ',' ' '); do
-        CMD="/neuro/users/rudolphpienaar/src/devel/roi_tag/rsample.py\
+        CMD="/neuro/users/rudolphpienaar/src/devel/roi_tag/$G_RSAMPLESCRIPT\
             -o ${OUTSTEM}${RESAMPLE} -r $RESAMPLETHRESHOLD -s 0 -a $ANNOT $SUBJLIST
             "
         echo "$CMD"
@@ -179,7 +191,7 @@ fi
 if (( ! b_skipRemainingRsample )) ; then
     for RESAMPLE in $(echo $RESAMPLELIST | tr ',' ' '); do
         for ANNOT in $(echo $ANNOTLIST | tr ',' ' '); do
-            CMD="/neuro/users/rudolphpienaar/src/devel/roi_tag/rsample.py\
+            CMD="/neuro/users/rudolphpienaar/src/devel/roi_tag/$G_RSAMPLESCRIPT\
                 -o ${OUTSTEM}${RESAMPLE} -r $RESAMPLETHRESHOLD -s 12 -a $ANNOT $SUBJLIST
                 "
             echo "$CMD"
@@ -201,7 +213,7 @@ fi
 THISDIR=$(pwd)
 
 CMD=$(echo "                        \
-/neuro/users/rudolphpienaar/src/devel/roi_tag/roi_controller.py                       \
+/neuro/users/rudolphpienaar/src/devel/roi_tag/$G_ROICONTROLLERSCRIPT    \
     -w $THISDIR                     \
     -r $RESAMPLELIST                \
     -t $RESAMPLETHRESHOLD           \
