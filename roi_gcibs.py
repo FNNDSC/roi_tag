@@ -429,7 +429,7 @@ class FNNDSC_roigcibs(base.FNNDSC):
                                     (key, index, 2*int(val)), mode='a')
             if val > self._f_lowerBoundSoft and val < self._f_upperBoundSoft:
                 misc.file_writeOnce(str_TCLfileName,
-                                    'labl_load %s ; labl_set_color %d %d %d 0\n' %\
+                                    'labl_load %s ; labl_set_color %d 0 %d 0\n' %\
                                     (key, index, 2*int(val), 2*int(val)), mode='a')
             if val >= self._f_upperBoundSoft:
                 misc.file_writeOnce(str_TCLfileName,
